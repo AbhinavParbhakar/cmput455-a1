@@ -288,11 +288,27 @@ class GtpConnection:
     """
     def gogui_rules_final_result_cmd(self, args: List[str]) -> None:
         """ Implement this function for Assignment 1 """
-        self.respond("unknown")
+        if self.board.get_end_of_game():
+            if self.board.winner == BLACK:
+                self.respond("black")
+            else:
+                self.respond("white")
+        else:
+            self.respond("unknown")
 
     def gogui_rules_legal_moves_cmd(self, args: List[str]) -> None:
-        """ Implement this function for Assignment 1 """
-        self.respond()
+        """ Super simple, simply check where the board is empty\n
+            Return empty list if game is over accordindly
+        """
+        legal_moves = []
+        if self.board.get_end_of_game():
+            self.respond([])
+        else:
+            empty_points = self.board.get_empty_points()
+            for empty_point in empty_points:
+                legal_moves.append(format_point(point_to_coord(empty_point,self.board.size)))
+            self.respond(legal_moves)
+        
 
     def play_cmd(self, args: List[str]) -> None:
         """

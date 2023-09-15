@@ -96,6 +96,13 @@ class GoBoard(object):
         complicated cases such as suicide.
         """
         assert is_black_white(color)
+
+        if self.game_over:
+            return False
+
+        if self.current_player != color:
+            return False
+
         if point == PASS:
             return True
         # Could just return False for out-of-bounds, 
@@ -114,6 +121,8 @@ class GoBoard(object):
         This method tries to play the move on a temporary copy of the board.
         This prevents the board from being modified by the move
         """
+        if self.game_over:
+            return False 
         if point == PASS:
             return True
         board_copy: GoBoard = self.copy()
@@ -123,7 +132,13 @@ class GoBoard(object):
     def end_of_game(self) -> bool:
         return self.last_move == PASS \
            and self.last2_move == PASS
-           
+    
+    def get_end_of_game(self)->bool:
+        """
+        Returns True if game is over, and False if it is not
+        """
+        return self.game_over
+
     def get_empty_points(self) -> np.ndarray:
         """
         Return:
@@ -295,7 +310,6 @@ class GoBoard(object):
             '7':1
         }
 
-        self.current_player = color
         if not self._is_legal_check_simple_cases(point, color):
             return False
         # Special cases
