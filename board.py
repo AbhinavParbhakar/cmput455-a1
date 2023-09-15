@@ -55,8 +55,10 @@ class GoBoard(object):
         Creates a start state, an empty board with given size.
         """
         self.size: int = size
-        self.black_
-        self.game_over = True
+        self.black_wins = 0
+        self.white_wins = 0
+        self.game_over = False
+        self.winner : GO_COLOR = EMPTY
         self.NS: int = size + 1
         self.WE: int = 1
         self.ko_recapture: GO_POINT = NO_POINT
@@ -228,12 +230,71 @@ class GoBoard(object):
             if len(captures) == 1:
                 single_capture = nb_point
         return single_capture
+    
+    def check_niniku_win(self,point:GO_POINT,action:int,num_in_row:int)->bool:
+        """
+        Recursively checks if five in a row for a given direction\n
+        Returns True if win and False if not or went too far and invalid index\n
+        For action:\n
+        \t0 means check north\n
+        \t1 means check north-east\n
+        \t2 means check east\n
+        \t3 means check south-east\n
+        \t4 means check south\n
+        \t5 means check south-west\n
+        \t6 means check west\n
+        \t7 means check north-west\n
+        """
+
+        if num_in_row == 5:
+            return True
+        else:
+            point_to_check = 0
+            if action == 0:
+                point_to_check = point + self.NS
+            elif action == 1:
+                point_to_check = (point + self.NS) + 1
+            elif action == 2:
+                point_to_check = point + 1
+            elif action == 3:
+                point_to_check = (point - self.NS) + 1
+            elif action == 4:
+                point_to_check = point - self.NS
+            elif action == 5:
+                point_to_check = (point - self.NS) - 1
+            elif action == 6:
+                point_to_check = point - 1 
+            elif action == 7:
+                point_to_check = (point + self.NS) - 1
+
+            try:
+                state : GO_COLOR = self.board[point_to_check]
+                if state == self.current_player:
+                    return self.check_niniku_win(point_to_check,action,num_in_row+1)
+                else:
+                    return False
+            except:
+                return False                
+
+
 
     def play_move(self, point: GO_POINT, color: GO_COLOR) -> bool:
         """
         Play a move of color on point
+        Sets Board.game_over to True if 
         Returns whether move was legal
         """
+        action_mapping_dict = {
+            '0':6,
+            '1':2,
+            '2':4,
+            '3':0,
+            '4':5,
+            '5':3,
+            '6':7,
+            '7':1
+        }
+
         if not self._is_legal_check_simple_cases(point, color):
             return False
         # Special cases
@@ -250,29 +311,28 @@ class GoBoard(object):
         self.board[point] = color
         single_captures = []
         neighbors = self._neighbors(point)
-        diagnol_neighbors = self._diag_neighbors(point)
+        diagonal_neighbors = self._diag_neighbors(point)
+        
+        found_win = False
+        i = 0
+        while i < len(neighbors) and not found_win:
+            if self.board[neighbors[i]] == self.current_player:
+                found_win = self.check_niniku_win(neighbors[i],action_mapping_dict[str(i)],2)
+            i+=1
+        if not found_win:
+            i = 0
+            while i < len(diagonal_neighbors) and not found_win:
+                if self.board[diagonal_neighbors[i]] == self.current_player:
+                    found_win = self.check_niniku_win(diagonal_neighbors[i],action_mapping_dict[str(i + 4)],2)
+                i+=1       
 
-        ##check if neighbors and diag_neighbors are the same
+        if found_win:
+            self.game_over = True
+            self.winner = self.current_player
 
-        #for nb in neighbors:
-
-
-
-        #for nb in neighbors:
-         #   if self.board[nb] == opp_color:
-          #      single_capture = self._detect_and_process_capture(nb)
-           #     if single_capture != NO_POINT:
-            #        single_captures.append(single_capture)
-        #block = self._block_of(point)
-        #if not self._has_liberty(block):  # undo suicide move
-         #   self.board[point] = EMPTY
-          #  return False
-        #self.ko_recapture = NO_POINT
-        #if in_enemy_eye and len(single_captures) == 1:
-         #   self.ko_recapture = single_captures[0]
         self.current_player = opponent(color)
-        #self.last2_move = self.last_move
-        #self.last_move = point
+        self.last2_move = self.last_move
+        self.last_move = point
         return True
 
     def neighbors_of_color(self, point: GO_POINT, color: GO_COLOR) -> List:
