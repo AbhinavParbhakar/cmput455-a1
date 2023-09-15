@@ -295,6 +295,7 @@ class GoBoard(object):
             '7':1
         }
 
+        self.current_player = color
         if not self._is_legal_check_simple_cases(point, color):
             return False
         # Special cases
