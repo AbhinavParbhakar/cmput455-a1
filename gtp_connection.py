@@ -357,11 +357,9 @@ class GtpConnection:
 
         empty_points_list = self.board.get_empty_points()
         random_index = np.random.randint(low=0,high=len(empty_points_list))
-        random_move = empty_points_list[random_index]
-        coordinate = move_to_coord(random_move,self.board.size)
-        point = self.board.pt(coordinate[0],coordinate[1])
-        if self.board.play_move(point,color):
-            self.respond(f'{random_move}')
+        random_point = empty_points_list[random_index]
+        if self.board.play_move(random_point,color):
+            self.respond(f'{format_point(point_to_coord(random_point,self.board.size))}')
         else:
             self.respond(f"Illegal move: {args[0]} ")
 

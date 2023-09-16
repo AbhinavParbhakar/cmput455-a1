@@ -335,7 +335,7 @@ class GoBoard(object):
         except:
             return []
 
-    def reset_points_to_zero(self,point_list:list[GO_POINT]):
+    def reset_points_to_zero(self,point_list:list):
         for point in point_list:
             self.board[point] = EMPTY
     def play_move(self, point: GO_POINT, color: GO_COLOR) -> bool:
