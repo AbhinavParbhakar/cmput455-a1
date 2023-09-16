@@ -55,8 +55,7 @@ class GoBoard(object):
         Creates a start state, an empty board with given size.
         """
         self.size: int = size
-        self.black_wins = 0
-        self.white_wins = 0
+        self.captures = {str(BLACK):[],str(WHITE):[]}
         self.game_over = False
         self.winner : GO_COLOR = EMPTY
         self.NS: int = size + 1
@@ -291,6 +290,51 @@ class GoBoard(object):
             except:
                 return False                
 
+    def niniku_capture(self,point:GO_POINT,action:int,opp_color_list:list)->list:
+        """
+        Recursively add to the list of stones taken\n
+        if ran into a stone of the same color, then stop and return the list\n
+        If ran into a boundary, return an empty list\n
+        For action:\n
+        \t0 means check north\n
+        \t1 means check north-east\n
+        \t2 means check east\n
+        \t3 means check south-east\n
+        \t4 means check south\n
+        \t5 means check south-west\n
+        \t6 means check west\n
+        \t7 means check north-west\n
+        """
+        point_to_check = point
+        if action == 0:
+            point_to_check = point + self.NS
+        elif action == 1:
+            point_to_check = (point + self.NS) + 1
+        elif action == 2:
+            point_to_check = point + 1
+        elif action == 3:
+            point_to_check = (point - self.NS) + 1
+        elif action == 4:
+            point_to_check = point - self.NS
+        elif action == 5:
+            point_to_check = (point - self.NS) - 1
+        elif action == 6:
+            point_to_check = point - 1 
+        elif action == 7:
+            point_to_check = (point + self.NS) - 1
+
+        try:
+            state : GO_COLOR = self.board[point_to_check]
+            if state == opponent(self.current_player):
+                opp_color_list.append(point_to_check)
+                return self.niniku_capture(point_to_check,action,opp_color_list)
+            elif state == self.current_player:
+                return opp_color_list
+            elif state == EMPTY:
+                return []
+        except:
+            return []
+
 
 
     def play_move(self, point: GO_POINT, color: GO_COLOR) -> bool:
@@ -333,12 +377,22 @@ class GoBoard(object):
         while i < len(neighbors) and not found_win:
             if self.board[neighbors[i]] == self.current_player:
                 found_win = self.check_niniku_win(neighbors[i],action_mapping_dict[str(i)],2)
+            elif self.board[neighbors[i]] == opp_color:
+                self.captures[str(self.current_player)].extend(self.niniku_capture(neighbors[i],action_mapping_dict[str(i)],[neighbors[i]]))
+
+            if len(self.captures[str(self.current_player)]) >= 10:
+                found_win = True
             i+=1
         if not found_win:
             i = 0
             while i < len(diagonal_neighbors) and not found_win:
                 if self.board[diagonal_neighbors[i]] == self.current_player:
                     found_win = self.check_niniku_win(diagonal_neighbors[i],action_mapping_dict[str(i + 4)],2)
+                elif self.board[diagonal_neighbors[i]] == opp_color:
+                    self.captures[str(self.current_player)].extend(self.niniku_capture(diagonal_neighbors[i],action_mapping_dict[str(i + 4)],[diagonal_neighbors[i]]))
+                
+                if len(self.captures[str(self.current_player)]) >= 10:
+                    found_win = True
                 i+=1       
 
         if found_win:
