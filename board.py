@@ -330,13 +330,14 @@ class GoBoard(object):
                 return self.niniku_capture(point_to_check,action,opp_color_list)
             elif state == self.current_player:
                 return opp_color_list
-            elif state == EMPTY:
+            elif state == EMPTY or state == BORDER:
                 return []
         except:
             return []
 
-
-
+    def reset_points_to_zero(self,point_list:list[GO_POINT]):
+        for point in point_list:
+            self.board[point] = EMPTY
     def play_move(self, point: GO_POINT, color: GO_COLOR) -> bool:
         """
         Play a move of color on point
@@ -357,6 +358,8 @@ class GoBoard(object):
         if not self._is_legal_check_simple_cases(point, color):
             return False
         # Special cases
+
+
         if point == PASS:
             self.ko_recapture = NO_POINT
             self.current_player = opponent(color)
@@ -379,9 +382,8 @@ class GoBoard(object):
                 found_win = self.check_niniku_win(neighbors[i],action_mapping_dict[str(i)],2)
             elif self.board[neighbors[i]] == opp_color:
                 single_captures.extend(self.niniku_capture(neighbors[i],action_mapping_dict[str(i)],[neighbors[i]]))
-
-            if len(single_captures) >= 10:
                 self.captures[str(self.current_player)] += len(single_captures)
+            if self.captures[str(self.current_player)] >= 10:
                 found_win = True
             i+=1
         if not found_win:
@@ -391,18 +393,18 @@ class GoBoard(object):
                     found_win = self.check_niniku_win(diagonal_neighbors[i],action_mapping_dict[str(i + 4)],2)
                 elif self.board[diagonal_neighbors[i]] == opp_color:
                     single_captures.extend(self.niniku_capture(diagonal_neighbors[i],action_mapping_dict[str(i + 4)],[diagonal_neighbors[i]]))
-                
-                if len(single_captures) >= 10:
-                    found_win = True
                     self.captures[str(self.current_player)] += len(single_captures)
+                if self.captures[str(self.current_player)] >= 10:
+                    found_win = True
                 i+=1       
-
+        self.reset_points_to_zero(point_list=single_captures)
         if found_win:
             self.game_over = True
             self.winner = self.current_player
 
-        
-
+        if len(self.get_empty_points()) == 0:
+            self.game_over = True
+            self.winner = EMPTY
         self.current_player = opponent(color)
         self.last2_move = self.last_move
         self.last_move = point

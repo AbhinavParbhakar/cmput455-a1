@@ -291,8 +291,10 @@ class GtpConnection:
         if self.board.get_end_of_game():
             if self.board.winner == BLACK:
                 self.respond("black")
-            else:
+            elif self.board.winner == WHITE:
                 self.respond("white")
+            else:
+                self.respond("draw")
         else:
             self.respond("unknown")
 
@@ -342,16 +344,27 @@ class GtpConnection:
         Modify this function for Assignment 1.
         Generate a move for color args[0] in {'b','w'}.
         """
+
         board_color = args[0].lower()
         color = color_to_int(board_color)
-        move = self.go_engine.get_move(self.board, color)
-        move_coord = point_to_coord(move, self.board.size)
-        move_as_string = format_point(move_coord)
-        if self.board.is_legal(move, color):
-            self.board.play_move(move, color)
-            self.respond(move_as_string)
+        if color != self.board.current_player:
+            self.respond(f"Illegal move: {args[0]} - wrong color")
+            return
+        
+        if self.board.game_over:
+            self.respond(f"Illegal move: {args[0]} -  game over")
+            return
+
+        empty_points_list = self.board.get_empty_points()
+        random_index = np.random.randint(low=0,high=len(empty_points_list))
+        random_move = empty_points_list[random_index]
+        coordinate = move_to_coord(random_move,self.board.size)
+        point = self.board.pt(coordinate[0],coordinate[1])
+        if self.board.play_move(point,color):
+            self.respond(f'{random_move}')
         else:
-            self.respond("Illegal move: {}".format(move_as_string))
+            self.respond(f"Illegal move: {args[0]} ")
+
 
     def gogui_rules_captured_count_cmd(self, args: List[str]) -> None:
         """ 
@@ -421,7 +434,7 @@ def move_to_coord(point_str: str, board_size: int) -> Tuple[int, int]:
     return row, col
 
 
-def color_to_int(c: str) -> int:
+def color_to_int(c: str) -> GO_COLOR:
     """convert character to the appropriate integer code"""
-    color_to_int = {"b": BLACK, "w": WHITE, "e": EMPTY, "BORDER": BORDER}
+    color_to_int : dict[str,GO_COLOR] = {"b": BLACK, "w": WHITE, "e": EMPTY, "BORDER": BORDER}
     return color_to_int[c]
