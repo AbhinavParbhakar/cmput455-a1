@@ -55,7 +55,7 @@ class GoBoard(object):
         Creates a start state, an empty board with given size.
         """
         self.size: int = size
-        self.captures = {str(BLACK):[],str(WHITE):[]}
+        self.captures = {str(BLACK):0,str(WHITE):0}
         self.game_over = False
         self.winner : GO_COLOR = EMPTY
         self.NS: int = size + 1
@@ -378,9 +378,10 @@ class GoBoard(object):
             if self.board[neighbors[i]] == self.current_player:
                 found_win = self.check_niniku_win(neighbors[i],action_mapping_dict[str(i)],2)
             elif self.board[neighbors[i]] == opp_color:
-                self.captures[str(self.current_player)].extend(self.niniku_capture(neighbors[i],action_mapping_dict[str(i)],[neighbors[i]]))
+                single_captures.extend(self.niniku_capture(neighbors[i],action_mapping_dict[str(i)],[neighbors[i]]))
 
-            if len(self.captures[str(self.current_player)]) >= 10:
+            if len(single_captures) >= 10:
+                self.captures[str(self.current_player)] += len(single_captures)
                 found_win = True
             i+=1
         if not found_win:
@@ -389,15 +390,18 @@ class GoBoard(object):
                 if self.board[diagonal_neighbors[i]] == self.current_player:
                     found_win = self.check_niniku_win(diagonal_neighbors[i],action_mapping_dict[str(i + 4)],2)
                 elif self.board[diagonal_neighbors[i]] == opp_color:
-                    self.captures[str(self.current_player)].extend(self.niniku_capture(diagonal_neighbors[i],action_mapping_dict[str(i + 4)],[diagonal_neighbors[i]]))
+                    single_captures.extend(self.niniku_capture(diagonal_neighbors[i],action_mapping_dict[str(i + 4)],[diagonal_neighbors[i]]))
                 
-                if len(self.captures[str(self.current_player)]) >= 10:
+                if len(single_captures) >= 10:
                     found_win = True
+                    self.captures[str(self.current_player)] += len(single_captures)
                 i+=1       
 
         if found_win:
             self.game_over = True
             self.winner = self.current_player
+
+        
 
         self.current_player = opponent(color)
         self.last2_move = self.last_move
