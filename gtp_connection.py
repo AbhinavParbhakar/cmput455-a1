@@ -320,16 +320,29 @@ class GtpConnection:
         try:
             board_color = args[0].lower()
             board_move = args[1]
-            color = color_to_int(board_color)
+            
+            try:
+                color = color_to_int(board_color)
+            except:
+                self.respond("Illegal Move: {} wrong color".format(board_color))
+                return
+
             if args[1].lower() == "pass":
                 self.board.play_move(PASS, color)
                 self.board.current_player = opponent(color)
                 self.respond()
                 return
-            coord = move_to_coord(args[1], self.board.size)
-            move = coord_to_point(coord[0], coord[1], self.board.size)
+            try:
+                coord = move_to_coord(args[1], self.board.size)
+                move = coord_to_point(coord[0], coord[1], self.board.size)
+            except:
+                self.respond("Illegal Move: {} wrong coordinate".format(board_move))
+                return
             if not self.board.play_move(move, color):
-                self.respond("Illegal Move: {}".format(board_move))
+                if color != self.board.current_player:
+                    self.respond("Illegal Move: {} wrong color".format(board_color))
+                elif self.board.board[move] != EMPTY:
+                    self.respond("Illegal Move: {} occupied".format(board_move))
                 return
             else:
                 self.debug_msg(
@@ -346,14 +359,22 @@ class GtpConnection:
         """
 
         board_color = args[0].lower()
-        color = color_to_int(board_color)
+        try:
+            color = color_to_int(board_color)
+        except:
+            self.respond(f"Illegal move: {args[0]} - wrong color")
+            return
         if color != self.board.current_player:
             self.respond(f"Illegal move: {args[0]} - wrong color")
             return
         
         if self.board.game_over:
-            self.respond(f"Illegal move: {args[0]} -  game over")
-            return
+            if color != self.board.winner:
+                self.respond(f"resign")
+                return
+            else:
+                self.respond('pass')
+                return
 
         empty_points_list = self.board.get_empty_points()
         random_index = np.random.randint(low=0,high=len(empty_points_list))
