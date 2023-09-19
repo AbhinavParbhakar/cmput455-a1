@@ -99,8 +99,8 @@ class GoBoard(object):
         if self.game_over:
             return False
 
-        if self.current_player != color:
-            return False
+        #if self.current_player != color:
+            #return False
 
         if point == PASS:
             return True
@@ -358,7 +358,7 @@ class GoBoard(object):
         if not self._is_legal_check_simple_cases(point, color):
             return False
         # Special cases
-
+        self.current_player = color
 
         if point == PASS:
             self.ko_recapture = NO_POINT
