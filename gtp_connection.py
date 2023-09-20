@@ -289,14 +289,14 @@ class GtpConnection:
     def gogui_rules_final_result_cmd(self, args: List[str]) -> None:
         """ Implement this function for Assignment 1 """
         if self.board.get_end_of_game():
+            self.respond("draw")
+        else:
             if self.board.winner == BLACK:
                 self.respond("black")
             elif self.board.winner == WHITE:
                 self.respond("white")
             else:
-                self.respond("draw")
-        else:
-            self.respond("unknown")
+                self.respond("unknown")
 
     def gogui_rules_legal_moves_cmd(self, args: List[str]) -> None:
         """ Super simple, simply check where the board is empty\n
@@ -304,12 +304,14 @@ class GtpConnection:
         """
         legal_moves = []
         if self.board.get_end_of_game():
-            self.respond([])
+            self.respond('')
+        elif self.board.winner != EMPTY:
+            self.respond('')
         else:
             empty_points = self.board.get_empty_points()
             for empty_point in empty_points:
                 legal_moves.append(format_point(point_to_coord(empty_point,self.board.size)))
-            self.respond(legal_moves)
+            self.respond(*legal_moves)
         
 
     def play_cmd(self, args: List[str]) -> None:
@@ -339,16 +341,16 @@ class GtpConnection:
                 self.respond("Illegal Move: {} wrong coordinate".format(board_move))
                 return
             if not self.board.play_move(move, color):
-                if color != self.board.current_player:
-                    self.respond("Illegal Move: {} wrong color".format(board_color))
-                elif self.board.board[move] != EMPTY:
+                if self.board.board[move] != EMPTY:
                     self.respond("Illegal Move: {} occupied".format(board_move))
+                elif self.board.game_over:
+                    self.respond("Illegal Move: {} game over".format(board_move))
                 return
             else:
                 self.debug_msg(
                     "Move: {}\nBoard:\n{}\n".format(board_move, self.board2d())
                 )
-            self.respond()
+            self.respond("")
         except Exception as e:
             self.respond("Error: {}".format(str(e)))
 
@@ -364,11 +366,12 @@ class GtpConnection:
         except:
             self.respond(f"Illegal move: {args[0]} - wrong color")
             return
-        if color != self.board.current_player:
-            self.respond(f"Illegal move: {args[0]} - wrong color")
-            return
         
         if self.board.game_over:
+            self.respond('pass')
+            return
+
+        if self.board.winner != EMPTY:
             if color != self.board.winner:
                 self.respond(f"resign")
                 return
@@ -382,7 +385,7 @@ class GtpConnection:
         if self.board.play_move(random_point,color):
             self.respond(f'{format_point(point_to_coord(random_point,self.board.size))}')
         else:
-            self.respond(f"Illegal move: {args[0]} ")
+            self.respond(f"Illegal move: {args[0]} game over")
 
 
     def gogui_rules_captured_count_cmd(self, args: List[str]) -> None:

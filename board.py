@@ -99,8 +99,8 @@ class GoBoard(object):
         if self.game_over:
             return False
 
-        if self.current_player != color:
-            return False
+        #if self.current_player != color:
+            #return False
 
         if point == PASS:
             return True
@@ -329,7 +329,10 @@ class GoBoard(object):
                 opp_color_list.append(point_to_check)
                 return self.niniku_capture(point_to_check,action,opp_color_list)
             elif state == self.current_player:
-                return opp_color_list
+                if len(opp_color_list) % 2 == 0:
+                    return opp_color_list
+                else:
+                    return []
             elif state == EMPTY or state == BORDER:
                 return []
         except:
@@ -358,6 +361,7 @@ class GoBoard(object):
         if not self._is_legal_check_simple_cases(point, color):
             return False
         # Special cases
+        self.current_player = color
 
 
         if point == PASS:
@@ -371,7 +375,18 @@ class GoBoard(object):
         opp_color = opponent(color)
         #in_enemy_eye = self._is_surrounded(point, opp_color)
         self.board[point] = color
+
+        if self.winner != EMPTY:
+            if len(self.get_empty_points()) == 0:
+                self.game_over = True
+            self.current_player = opponent(color)
+            self.last2_move = self.last_move
+            self.last_move = point
+
+            return True
+
         single_captures = []
+        session_captures = []
         neighbors = self._neighbors(point)
         diagonal_neighbors = self._diag_neighbors(point)
         
@@ -383,6 +398,8 @@ class GoBoard(object):
             elif self.board[neighbors[i]] == opp_color:
                 single_captures.extend(self.niniku_capture(neighbors[i],action_mapping_dict[str(i)],[neighbors[i]]))
                 self.captures[str(self.current_player)] += len(single_captures)
+                session_captures.extend(single_captures)
+                single_captures = []
             if self.captures[str(self.current_player)] >= 10:
                 found_win = True
             i+=1
@@ -397,9 +414,9 @@ class GoBoard(object):
                 if self.captures[str(self.current_player)] >= 10:
                     found_win = True
                 i+=1       
-        self.reset_points_to_zero(point_list=single_captures)
+        self.reset_points_to_zero(point_list=session_captures)
         if found_win:
-            self.game_over = True
+            #self.game_over = True
             self.winner = self.current_player
 
         if len(self.get_empty_points()) == 0:
